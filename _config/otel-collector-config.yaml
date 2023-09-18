@@ -12,19 +12,19 @@ exporters:
   logging:
     verbosity: detailed
   otlp:
-    endpoint: ${TRACES_URL}
+    endpoint: ${env:TRACES_URL}
     tls:
       insecure: false
     auth:
       authenticator: basicauth/traces
 
   prometheusremotewrite:
-    endpoint: ${METRICS_URL}
+    endpoint: ${env:METRICS_URL}
     auth:
       authenticator: basicauth/metrics
 
   loki:
-    endpoint: ${LOGS_URL}
+    endpoint: ${env:LOGS_URL}
     auth:
       authenticator: basicauth/logs
 
@@ -46,18 +46,18 @@ extensions:
     endpoint: :1888
   zpages:
     endpoint: :55679
-    basicauth/traces:
-      client_auth:
-        username: "${TRACES_USER_ID}"
-        password: "${TRACES_API_KEY}"
-    basicauth/metrics:
-      client_auth:
-        username: "${METRICS_USER_ID}"
-        password: "${METRICS_API_KEY}"
-    basicauth/logs:
-      client_auth:
-        username: "${LOGS_USER_ID}"
-        password: "${LOGS_API_KEY}"   
+  basicauth/traces:
+    client_auth:
+      username: "${env:TRACES_USER_ID}"
+      password: "${env:TRACES_API_KEY}"
+  basicauth/metrics:
+    client_auth:
+      username: "${env:METRICS_USER_ID}"
+      password: "${env:METRICS_API_KEY}"
+  basicauth/logs:
+    client_auth:
+      username: "${env:LOGS_USER_ID}"
+      password: "${env:LOGS_API_KEY}"   
 
 connectors:
   spanmetrics:

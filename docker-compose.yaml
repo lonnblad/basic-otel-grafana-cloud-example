@@ -60,6 +60,8 @@ services:
     container_name: otel-collector
     restart: unless-stopped
     command: ["--config=/etc/otel-collector-config.yaml"]
+    env_file:
+      - ./_config/otel-collector.env
     volumes:
       - ./_config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
