@@ -19,7 +19,7 @@ However you need to configure with your URLs and Credentials, for more informati
 - `Open Telemetry Collector` which receives logs, traces and metrics and forwards them to `Grafana Cloud`.
 - `Grafana Cloud` for storing logs, traces and metrics as well as the `Grafana UI`.
 
-![Architecture](https://www.planttext.com/api/plantuml/png/VLFBRi8m4BpdAxQSGAtK2yUgGaIK2nLLeUV8THPguKVaE2sewhzt0uvZ824NhxqpivDnCYaTiwvIChaJciigHtXAnu_fE4kDTanejCz9CjCERM55YTdKL3fdzZ34FLE5n0SOJ5afEFWzR8o5kP5CR-4UbWLgMAD4XSuUu4UuBvXRjc6QGIfDbGz6y9i0FQj3wL2ryYNQRy6n9FsLBmEsUOB5eJGidoDLp1bBb0Nj8HmCHZsqZVWqcd4kYFBIrE3dzR6osTuDkP4I-MdOSZrRKDiVtAGLrYZQIcAz-TBZ_vBE6BQdi8vP4Qaxk-ivqkp4COQTYFoSOvHGehR_Mg-zA79J64AjwxKNvMss3i_VwXtbvHN5qNjm7pJEsaDhLAJGWMXWsKSHfNxvdRHovxWET_N85d0nCI2YSty74JrgDk5tTvlGO-KGyRLkQ7MeXbwaIRSoGPtJN_yF "").
+![Architecture](https://www.planttext.com/api/plantuml/png/VLFBRi8m4BpdAxQSGAtK2yUgGaIK2nLLeUV8THPguKVaE2sewhzt0uvZ824NhxqpivDnCYaTiwvIChaJciigHtXAnu_fE4kDTanejCz9CjCERM55YTdKL3fdzZ34FLE5n0SOJ5afEFWzR8o5kP5CR-4UbWLgMAD4XSuUu4UuBvXRjc6QGIfDbGz6y9i0FQj3wL2ryYNQRy6n9FsLBmEsUOB5eJGidoDLp1bBb0Nj8HmCHZsqZVWqcd4kYFBIrE3dzR6osTuDkP4I-MdOSZrRKDiVtAGLrYZQIcAz-TBZ_vBE6BQdi8vP4Qaxk-ivqkp4COQTYFoSOvHGehR_Mg-zA79J64AjwxKNvMss3i_VwXtbvHN5qNjm7pJEsaDhLAJGWMXWsKSHfNxvdRHovxWET_N85d0nCI2YSty74JrgDk5tTvlGO-KGyRLkQ7MeXbwaIRSoGPtJN_yF "")
 
 
 ## Grafana Cloud Setup
@@ -29,7 +29,7 @@ To sign up for Grafana Cloud, go to https://grafana.com/.
 To read more about Grafana and how to use the Open Telemetry Collector.
 https://grafana.com/docs/opentelemetry/collector/
 
-To configure the OTEL Collector for Grafana, simply replace the URLs and credentials in `.config/otel-collector.env` with your URLs and credentials.
+To configure the OTEL Collector for Grafana, simply replace the URLs and credentials in [.config/otel-collector.env](.config/otel-collector.env) with your URLs and credentials.
 
 This guide can help you on how to retreive your URLs and credentials for Grafana Cloud.
 https://grafana.com/docs/opentelemetry/collector/send-otlp-to-grafana-cloud-databases/
