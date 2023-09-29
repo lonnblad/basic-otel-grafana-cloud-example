@@ -21,7 +21,7 @@ It uses docker-compose to build and run all the parts and serves as an easy star
 To read more about Grafana and how to use the Open Telemetry Collector.
 https://grafana.com/docs/opentelemetry/collector/
 
-Replace the URLs and credentials in `_config/otel-collector.env` with your URLs and credentials.
+Replace the URLs and credentials in `.config/otel-collector.env` with your URLs and credentials.
 
 This is a good guide on how to retreive your URLs and credentials for Grafana Cloud.
 https://grafana.com/docs/opentelemetry/collector/send-otlp-to-grafana-cloud-databases/
