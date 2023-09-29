@@ -8,15 +8,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 
+	"github.com/lonnblad/basic-otel-grafana-cloud-example/config"
+	"github.com/lonnblad/basic-otel-grafana-cloud-example/telemetry"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-
-	"github.com/lonnblad/basic-otel-grafana-cloud-example/config"
-	"github.com/lonnblad/basic-otel-grafana-cloud-example/telemetry"
 )
 
 func main() {
@@ -62,29 +62,51 @@ func main() {
 
 	defer func() {
 		if err := traceProvider.Shutdown(ctx); err != nil {
-			slog.ErrorContext(ctx, "Couldn't shutdown meter provider", "error", err)
+			slog.ErrorContext(ctx, "Couldn't shutdown tracer provider", "error", err)
 			return
 		}
 	}()
 
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
+	signal.Notify(sigCh, syscall.SIGTERM)
 
+	serverCtx, cancel := context.WithCancel(context.Background())
+	hasShutdown := make(chan struct{}, 1)
+	go runHTTPServer(serverCtx, hasShutdown)
+
+	<-sigCh
+
+	slog.InfoContext(ctx, "Gracefully shutting down")
+	cancel()
+
+	<-hasShutdown
+
+	slog.InfoContext(ctx, "Good bye")
+}
+
+func runHTTPServer(ctx context.Context, shutdownChan chan struct{}) {
 	otelHandler := otelhttp.NewHandler(calculateHandlerFunc(), "POST :: /calculate")
 	http.Handle("/calculate", otelHandler)
 
 	server := http.Server{Addr: ":" + config.GetRestPort(), Handler: nil}
 
 	go func() {
-		err = server.ListenAndServe()
+		err := server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			slog.ErrorContext(ctx, "ListenAndServe exited with an error", "error", err)
+		}
 	}()
 
-	<-sigCh
-	ctx, cancel := context.WithTimeout(ctx, config.GetShutdownTimeout())
+	<-ctx.Done()
+
+	ctx, cancel := context.WithTimeout(context.Background(), config.GetShutdownTimeout())
 	defer cancel()
 
-	server.Shutdown(ctx)
-	slog.InfoContext(ctx, "Good bye")
+	if err := server.Shutdown(ctx); err != nil {
+		slog.ErrorContext(ctx, "Couldn't shutdown HTTP server gracefully", "error", err)
+	}
+
+	shutdownChan <- struct{}{}
 }
 
 func calculateHandlerFunc() http.HandlerFunc {

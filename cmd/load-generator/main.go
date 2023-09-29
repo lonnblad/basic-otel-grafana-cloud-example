@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -73,23 +74,24 @@ func main() {
 	}()
 
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
+	signal.Notify(sigCh, syscall.SIGTERM)
 
 	//=== Run the load generator ===//
-	go runLoadGenerator(ctx)
+	generatorCtx, cancel := context.WithCancel(context.Background())
+	hasShutdown := make(chan struct{}, 1)
+	go runLoadGenerator(generatorCtx, hasShutdown)
 
-	select {
-	case <-sigCh:
-		_, cancel := context.WithCancel(ctx)
-		cancel()
+	<-sigCh
 
-		slog.InfoContext(ctx, "Good bye")
+	slog.InfoContext(ctx, "Gracefully shutting down")
+	cancel()
 
-		return
-	}
+	<-hasShutdown
+
+	slog.InfoContext(ctx, "Good bye")
 }
 
-func runLoadGenerator(ctx context.Context) {
+func runLoadGenerator(ctx context.Context, shutdownChan chan struct{}) {
 	for {
 		n, err := rand.Int(rand.Reader, big.NewInt(100))
 		if err != nil {
@@ -100,10 +102,11 @@ func runLoadGenerator(ctx context.Context) {
 
 		select {
 		case <-ctx.Done():
+			shutdownChan <- struct{}{}
 			return
 
 		default:
-			time.Sleep(time.Second)
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
@@ -134,6 +137,12 @@ func fibonacci(ctx context.Context, n int64) {
 func callFibonacciService(ctx context.Context, n int64) (_ int64, err error) {
 	ctx, span := otel.Tracer("client").Start(ctx, "call fibonacci-service")
 	defer span.End()
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+	}()
 
 	client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
 	url := config.GetFibonacciServiceUrl() + "/calculate"
@@ -145,10 +154,6 @@ func callFibonacciService(ctx context.Context, n int64) (_ int64, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
 	if err != nil {
 		err = fmt.Errorf("couldn't create a request to the fibonacci-service: %w", err)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
 		return
 	}
 
@@ -157,10 +162,6 @@ func callFibonacciService(ctx context.Context, n int64) (_ int64, err error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		err = fmt.Errorf("couldn't call the fibonacci-service: %w", err)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
 		return
 	}
 
@@ -168,10 +169,6 @@ func callFibonacciService(ctx context.Context, n int64) (_ int64, err error) {
 
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("the fibonacci-service returned a non 200 response: %d", resp.StatusCode)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
 		return
 	}
 
@@ -182,10 +179,6 @@ func callFibonacciService(ctx context.Context, n int64) (_ int64, err error) {
 	err = json.NewDecoder(resp.Body).Decode(&respBody)
 	if err != nil {
 		err = fmt.Errorf("couldn't decode the fibonacci-service response: %w", err)
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
 		return
 	}
 
